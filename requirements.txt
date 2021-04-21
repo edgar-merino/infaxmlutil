@@ -1,0 +1,5 @@
+click==7.1.2
+et-xmlfile==1.0.1
+lxml==4.6.3
+openpyxl==3.0.7
+PyYAML==5.4.1

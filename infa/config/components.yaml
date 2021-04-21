@@ -1,0 +1,62 @@
+components:
+    sources: 
+        xpath: //FOLDER/SOURCE
+        format: 
+            SOURCE: $DBDNAME.$NAME
+    targets: //FOLDER/TARGET
+    workflows: //FOLDER/WORKFLOW
+    mappings: //FOLDER/MAPPING
+    worklets: //FOLDER/WORKLET
+    mapplets: //FOLDER/MAPPLET
+    sessions: //FOLDER/SESSION
+    udfs: //FOLDER/EXPRMACRO
+    sql-overrides: 
+        xpath: //MAPPING/TRANSFORMATION[@TYPE='Source Qualifier']/TABLEATTRIBUTE[@NAME='Sql Query' and @VALUE!='']
+        format:
+            TABLEATTRIBUTE: $VALUE
+    connections: 
+        xpath: //SESSION/SESSIONEXTENSION/CONNECTIONREFERENCE
+        format:
+            CONNECTIONREFERENCE: $CNXREFNAME - $CONNECTIONTYPE - $VARIABLE - $CONNECTIONNAME
+nested:
+    sources:
+        ports: 
+            xpath: //FOLDER/SOURCE/SOURCEFIELD
+            format:
+                SOURCEFIELD: $NAME - $DATATYPE - $NULLABLE
+                SOURCE: $DBDNAME:$NAME
+    targets:
+        ports: 
+            xpath: //FOLDER/TARGET/TARGETFIELD
+            format:
+                TARGETFIELD: $NAME - $DATATYPE - $NULLABLE
+    mappings:
+        sources: //MAPPING/INSTANCE[@TRANSFORMATION_TYPE='Target Definition']
+        targets: //MAPPING/INSTANCE[@TRANSFORMATION_TYPE='Source Definition']
+        variables: //MAPPING/MAPPINGVARIABLE
+        trxs: 
+            xpath: //MAPPING/INSTANCE
+            format:
+                INSTANCE: $TRANSFORMATION_TYPE - $TYPE - $NAME
+    mapplets:
+        inputs: //MAPPLET/TRANSFORMATION[@TYPE='Input Transformation']
+        outputs: //MAPPLET/TRANSFORMATION[@TYPE='Output Transformation']
+        trxs: //MAPPLET/TRANSFORMATION
+    workflows:
+        variables: //WORKFLOW/WORKFLOWVARIABLE[@USERDEFINED='YES']
+        components: //WORKFLOW/TASKINSTANCE
+        param-file: 
+            xpath: //WORKFLOW/ATTRIBUTE[@NAME='Parameter Filename' and @VALUE!='']
+            format:
+                ATTRIBUTE: $VALUE
+    sessions:
+        sources: //SESSION/SESSTRANSFORMATIONINST[@TRANSFORMATIONTYPE='Source Qualifier']
+        targets: //SESSION/SESSTRANSFORMATIONINST[@TRANSFORMATIONTYPE='Target Definition']
+        gral-conns: 
+            xpath: //SESSION/ATTRIBUTE[(@NAME='$Source connection value' or @NAME='$Target connection value') and @VALUE!='']
+            format:
+                ATTRIBUTE: $VALUE
+        param-file: //SESSION/ATTRIBUTE[@NAME='Parameter Filename']
+        log-params: //SESSION/ATTRIBUTE[contains(@NAME, 'Session Log File ')]
+        attrs: //SESSION/SESSTRANSFORMATIONINST/ATTRIBUTE
+        assg: //SESSION/SESSIONCOMPONENT/VALUEPAIR
