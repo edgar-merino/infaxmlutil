@@ -14,7 +14,7 @@ import csv
 # third party libraries
 from lxml import etree
 import yaml
-from openpyxl import Workbook
+from openpyxl import Workbook, load_workbook
 from openpyxl.utils import get_column_letter
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import Alignment
@@ -135,39 +135,48 @@ def find_from_file(filename, comp, parent=None, conf=None, format='text', target
 	as child of the specified parent (optional) and save it into the specified 
 	format (text, csv or Excel) with the given name (target)
 	'''
-	# check if the specified file exists
-	if not os.path.isfile(filename):
-		raise Exception(f"File {filename} does not exists, please verify")
-	# parse file
-	print(f'Reading from {filename} ...')
-	print(f'Parsing {filename} ...')
-	tree=etree.parse(filename)
-	root=tree.getroot()
-	# check if is a valid exported Infa XML file
-	if root.tag != 'POWERMART':
-		raise Exception(f"The given file {filename} is not a valid exported INFA XML file, please verify")
-	# find all the nodes of the given [parent.]comp
-	print(f'Find {comp} into {filename} ...')
-	try:
-		result=find_nodes_as_list(root=root, comp=comp, parent=parent, conf=conf)
-	except:
-		print(f'Notice: Component [{comp}] not found, no files generated. Please verify')
-		return
-	if result is None or len(result)==0:
-		print(f'Notice: No components {comp} found on {filename}, no files generated. Please verify')
-		return
-	if target is None:
-		ext='.xlsx' if format=='excel' else '.csv'
-		target=os.path.splitext(basename(filename))[0]+ext
-	# TODO: enhance generating files in multiple formats
-	format = 'text' if format not in ('text', 'csv', 'excel') else format
-	print(f'Exporting to {format} ...')
-	if format=='text':
-		export_txt(result)
-	elif format=='csv':
-		export_csv(result, target)
-	elif format=='excel':
-		export_excel(result, target)
+	files=[]
+	if os.path.isdir(filename):
+		files=[os.path.join(filename, f) for f in os.listdir(filename) if (f.endswith('.xml') or f.endswith('.XML'))]
+		if len(files) == 0:
+			raise Exception(f"No xml files on {filename} directory, please verify")
+	else:
+		# check if the specified file exists
+		if not os.path.isfile(filename):
+			raise Exception(f"File {filename} does not exists, please verify")
+		files.append(filename)
+	for file in files:
+		outputfile=target
+		# parse file
+		print(f'\nProcessing from {file} ...')
+		tree=etree.parse(file)
+		root=tree.getroot()
+		# check if is a valid exported Infa XML file
+		if root.tag != 'POWERMART':
+			raise Exception(f"The given file {file} is not a valid exported INFA XML file, please verify")
+		# find all the nodes of the given [parent.]comp
+		print(f'Find {comp} into {file} ...')
+		try:
+			result=find_nodes_as_list(root=root, comp=comp, parent=parent, conf=conf)
+		except:
+			print(f'Notice: Component [{comp}] not found, no files generated. Please verify')
+			return
+		if result is None or len(result)==0:
+			print(f'Notice: No components {comp} found on {file}, no files generated. Please verify')
+			return
+		if outputfile is None:
+			ext='.xlsx' if format=='excel' else '.csv'
+			outputfile=os.path.splitext(basename(file))[0]+ext
+		# TODO: enhance generating files in multiple formats
+		format = 'text' if format not in ('text', 'csv', 'excel') else format
+		print(f'Exporting to {format} to {outputfile} ...')
+		if format=='text':
+			export_txt(result)
+		elif format=='csv':
+			export_csv(result, outputfile)
+		elif format=='excel':
+			sheet_name=comp if parent is None else '.'.join([parent, comp])[:30]
+			export_excel(result, outputfile, sheet_name)
 	# Done
 	print('Done')
 
@@ -183,10 +192,21 @@ def export_excel(data, filename, sheetname=None):
 	has_long_cols=False
 	if len(data)==0:
 		return
-	workbook = Workbook()
-	sheet = workbook.active
-	if sheetname is not None:
-		sheet.title=sheetname
+	# check if file exists
+	if os.path.isfile(filename):
+		# open it and create a worksheet if necessary
+		workbook = load_workbook(filename)
+		if sheetname in workbook.sheetnames:
+			sheet = workbook[sheetname]
+		else:
+			sheet = workbook.create_sheet(sheetname)
+	# create new workbook
+	else:
+		workbook = Workbook()
+		sheet = workbook.active
+		if sheetname is not None:
+			sheet.title=sheetname
+	# append new data
 	for row in data:
 		sheet.append(row)
 	# freeze first column
@@ -195,7 +215,7 @@ def export_excel(data, filename, sheetname=None):
 	sheet.auto_filter.ref=sheet.dimensions
 	# autosize (or kind of) columns
 	for column_cells in sheet.columns:
-		length = max(len(as_text(cell.value)) for cell in column_cells)+5
+		length = max(len(as_text(cell.value)) for cell in column_cells)+7
 		if length > LONG_COLUMN:
 			has_long_cols=True
 			length = LONG_COLUMN
@@ -247,4 +267,9 @@ Nested components:''')
 	for k,v in data['nested'].items():
 		print(f'  {k}:')
 		for kitm, vitm in v.items():
-			print(f'    {kitm}\t--from {k} --extract {kitm}')
+			print(f'    {kitm}\t[--from {k} --extract {kitm}] or [--extract {k}.{kitm}]')
+	print('''
+You can specify more than one component into the same --extract option by 
+separating them by commas
+''')
+
