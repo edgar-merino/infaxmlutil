@@ -23,16 +23,19 @@ nested:
         ports: 
             xpath: //FOLDER/SOURCE/SOURCEFIELD
             format:
-                SOURCEFIELD: $NAME - $DATATYPE - $NULLABLE
+                SOURCEFIELD: $NAME - $DATATYPE($PRECISION, $SCALE) - $NULLABLE
                 SOURCE: $DBDNAME:$NAME
     targets:
         ports: 
             xpath: //FOLDER/TARGET/TARGETFIELD
             format:
-                TARGETFIELD: $NAME - $DATATYPE - $NULLABLE
+                TARGETFIELD: $NAME - $DATATYPE($PRECISION, $SCALE) - $NULLABLE
     mappings:
-        sources: //MAPPING/INSTANCE[@TRANSFORMATION_TYPE='Target Definition']
-        targets: //MAPPING/INSTANCE[@TRANSFORMATION_TYPE='Source Definition']
+        sources: //MAPPING/INSTANCE[@TRANSFORMATION_TYPE='Source Definition']
+        targets: 
+            xpath: //MAPPING/INSTANCE[@TRANSFORMATION_TYPE='Target Definition']
+            format:
+                INSTANCE: $TRANSFORMATION_NAME
         variables: //MAPPING/MAPPINGVARIABLE
         trxs: 
             xpath: //MAPPING/INSTANCE
