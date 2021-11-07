@@ -19,7 +19,7 @@ def cli():
 @cli.command(name='export')
 @click.argument('file_name', type=click.Path(exists=True), nargs=-1)
 @click.option('-fr', '--from', 'parent', default=None, help='Parent element to retrieve (optional)')
-@click.option('-e', '--extract', default='workflows', help='Component to export', show_default=True)
+@click.option('-e', '--extract', default=['workflows'], help='Component to export', show_default=True, multiple=True)
 @click.option('-c', '--config', default=None, help='Configuration file to get components (YAML, optional)', type=click.File('rb'))
 @click.option('-f', '--format', default='excel', type=click.Choice(['text', 'csv', 'excel']), help='Format for output file', show_default=True)
 @click.option('-o', '--output', default=None, help='Output file name (optional)', type=click.File('wb'))
@@ -34,7 +34,20 @@ def export_it(file_name, parent, extract, config, format, output, list):
 		sys.exit(1)
 	for file in file_name:
 		click.echo(f'Processing {file}:')
-		find_from_file(filename=file, comp=extract, parent=parent, conf=config, format=format, target=output)
+		# get all the components to process
+		for comp in extract:
+			par=parent
+			# look for comma sepparated comps
+			insts = [c.strip() for c in comp.split(',')]
+			for inst in insts:
+				# look for parent.component arguments
+				sep = inst.split('.')
+				# separate them
+				if len(sep) > 1:
+					par = sep[0]
+					inst = sep[1]
+				# process it
+				find_from_file(filename=file, comp=inst, parent=par, conf=config, format=format, target=output)
 
 if __name__ == '__main__':
 	cli()

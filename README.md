@@ -74,7 +74,7 @@ Given the fact that all information about components, its properties and relatio
 
 The details about how to query and display those properties are abstracted into the configuration file used to generate the report of the desired components by assosiating a label with the desired set that holds the information about how to extract it an show it into a report.
 
-Those labels mentioned above, are the used as the `--from` and `--search` options of the extract command. At the moment, the possible values for those options could be listed by using the `-l` or the `--list` option of the extract command. The list of components available and its associated `--from` and `--search` options are shown below.
+Those labels mentioned above, are the used as the `--from` and `--extract` options of the extract command. At the moment, the possible values for those options could be listed by using the `-l` or the `--list` option of the extract command. The list of components available and its associated `--from` and `--extract` options are shown below.
 
 ```bash
 > python infaxmlutil.py export --list
@@ -96,33 +96,45 @@ The following components are nested by hierachy level and its associated command
 options are shown below.
 Nested components:
   sources:
-    ports       --from sources --extract ports
+    ports       [--from sources --extract ports] or [--extract sources.ports]
   targets:
-    ports       --from targets --extract ports
+    ports       [--from targets --extract ports] or [--extract targets.ports]
   mappings:
-    sources     --from mappings --extract sources
-    targets     --from mappings --extract targets
-    variables   --from mappings --extract variables
-    trxs        --from mappings --extract trxs
+    sources     [--from mappings --extract sources] or [--extract mappings.sources]
+    targets     [--from mappings --extract targets] or [--extract mappings.targets]
+    variables   [--from mappings --extract variables] or [--extract mappings.variables]
+    trxs        [--from mappings --extract trxs] or [--extract mappings.trxs]
   mapplets:
-    inputs      --from mapplets --extract inputs
-    outputs     --from mapplets --extract outputs
-    trxs        --from mapplets --extract trxs
+    inputs      [--from mapplets --extract inputs] or [--extract mapplets.inputs]
+    outputs     [--from mapplets --extract outputs] or [--extract mapplets.outputs]
+    trxs        [--from mapplets --extract trxs] or [--extract mapplets.trxs]
   workflows:
-    variables   --from workflows --extract variables
-    components  --from workflows --extract components
-    param-file  --from workflows --extract param-file
+    variables   [--from workflows --extract variables] or [--extract workflows.variables]
+    components  [--from workflows --extract components] or [--extract workflows.components]
+    param-file  [--from workflows --extract param-file] or [--extract workflows.param-file]
   sessions:
-    sources     --from sessions --extract sources
-    targets     --from sessions --extract targets
-    gral-conns  --from sessions --extract gral-conns
-    param-file  --from sessions --extract param-file
-    log-params  --from sessions --extract log-params
-    attrs       --from sessions --extract attrs
-    assg        --from sessions --extract assg
+    sources     [--from sessions --extract sources] or [--extract sessions.sources]
+    targets     [--from sessions --extract targets] or [--extract sessions.targets]
+    gral-conns  [--from sessions --extract gral-conns] or [--extract sessions.gral-conns]
+    param-file  [--from sessions --extract param-file] or [--extract sessions.param-file]
+    log-params  [--from sessions --extract log-params] or [--extract sessions.log-params]
+    attrs       [--from sessions --extract attrs] or [--extract sessions.attrs]
+    assg        [--from sessions --extract assg] or [--extract sessions.assg]
+
+Tip: You can specify more than one component into the same --extract option by 
+separating them by commas.
+The option:
+  --extract workflows,mappings.sources,mappings.targets
+Is equivalent to:
+  --extract workflows --extract mappings.sources --extract mappings.targets
+Those options will extract all the worflows, sources & targets at mapping level
+and, if excel format is selected, put that information into separate tabs of
+the generated excel file.
 ```
 
-As you can see, there are some components where you need to specified both the `--extract` option as well as its correspond `--from` option mainly for those elements that are defined at different levels on the hierarchy on thestructure of the XML file.
+As you can see, there are some components where you need to specified both the `--extract` option as well as its correspond `--from` option mainly for those elements that are defined at different levels on the hierarchy on the structure of the XML file. Alternatively, you can specify this hierarchy by putting the component's name for the `--extract` option in the form `parent.component`, which is equivalent to write `--from parent --extract component`.
+
+You can pass multiple components into the same `--extract` option by separate them by commas, in this way the option `--extract component1,component2,component3` is equivalent to `--extract component1 --extract component2 --extract component3`.
 
 ### Format
 
@@ -132,7 +144,7 @@ At this moment, you can generate the report in the following formats:
 | ------------ | ------------ |
 | text | The report is generated on the screen with the information of all the nodes retrieved  |
 | csv | Generates a comma sepparated file with the information of all the nodes retrieved, by default the file generated has the same name as the file processed with .csv extenssion.  |
-| excel | Generates an Excel file with the information of all the nodes retrieved, by default the file generated has the same name as the file processed with .xlsx extenssion. It is not necessary to have MS Excel installed to generate this file. |
+| excel | Generates an Excel file with the information of all the nodes retrieved, by default the file generated has the same name as the file processed with .xlsx extenssion. If multiple components are specified into the `--extract` option, each given component would be saved into a separated tab. It is not necessary to have MS Excel installed to generate files in this format. |
 
 If not specified, the command will generate Excel files by default.
 
@@ -194,6 +206,8 @@ The following table, shows how to invoke the command to get a report with the de
 | ------------ | ------------ | ------------ |
 | All workflows in an INFA.xml file | `python infaxmlutil.py export --extract workflows INFA.xml` | An Excel file named INFA.xlsx with all the workflows in the XML file |
 | All sources defined at Mapping level | `python infaxmlutil.py export  --from mappings --extract sources INFA.xml` | An Excel file named INFA.xlsx with all the sources defined at mapping level |
+| All sources defined at Mapping level | `python infaxmlutil.py export --extract mappings.sources INFA.xml` | An Excel file named INFA.xlsx with all the sources defined at mapping level |
+| All sources and targets defined at Mapping level | `python infaxmlutil.py export --extract mappings.sources,mappings.targets INFA.xml` | An Excel file named INFA.xlsx with all the sources and targets defined at mapping level in separated tabs |
 | All mappings in csv format | `python infaxmlutil.py export --extract mappings --format csv INFA.xml` | A csv file named INFA.csv with all mappings defined in the XML file |
 
 ## Libraries
